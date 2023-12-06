@@ -57,25 +57,30 @@ for i in range(0, len(seeds), 2):
     start = seeds[i]
     end = seeds[i] + seeds[i + 1]
 
-    # left = start
-    # right = end - 1
-    # minimum = dest(left)
-    # while left <= right:
-    #     mid = left + (right - left) // 2
-    #     v = dest(mid)
-    #     minimum = min(v, minimum)
-    #     if v >= dest(left) and v < dest(right):
-    #         left = mid + 1
-    #     else:
-    #         right = mid - 1
+    left = start
+    right = end - 1
+    minimum = dest(left)
+    while left < right:
+        mid = left + (right - left) // 2
+        v = dest(mid)
 
-    # print(f"calc {minimum}")
+        minimum = min(v, minimum)
+        print(minimum, left, mid, right)
+
+        on_the_left = abs(v - dest(right)) / abs(mid - right)
+        on_the_right = abs(v - dest(left)) / abs(mid - left)
+        if on_the_left > on_the_right:
+            right = mid - 1
+        else:
+            left = mid + 1
+
+    print(f"calc {minimum}")
     for seed in range(start, end):
         location = dest(seed)
         if ans is None:
             ans = (location, seed)
         else:
             ans = min(ans, (location, seed))
-        print(seed, location)
+        print(seed, " | ", location)
     print("NEW PAIR")
 print(ans)

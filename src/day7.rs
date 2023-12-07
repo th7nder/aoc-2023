@@ -6,6 +6,7 @@ use crate::files::read_lines;
 
 #[derive(PartialEq, PartialOrd, Clone, Copy, Eq, Hash, Debug, Ord)]
 enum Card {
+    J,
     Two,
     Three,
     Four, 
@@ -15,7 +16,6 @@ enum Card {
     Eight, 
     Nine,
     T,
-    J,
     Q,
     K,
     A 
@@ -67,18 +67,52 @@ impl Hand {
         let mut fours = 0;
         let mut threes = 0;
         let mut twos = 0;
-        for (_, count) in counter.iter() {
+        let mut ones  = 0;
+        let jokers = *counter.get(&Card::J).unwrap_or(&0);
+
+
+        for (card, count) in counter.iter() {
+            if *card == Card::J {
+                continue;
+            }
             match count {
                 5 => fives += 1,
                 4 => fours += 1,
                 3 => threes += 1,
                 2 => twos += 1,
-                1 => {},
+                1 => ones += 1,
                 _ => panic!("don't know")
             }
         }
 
 
+        for _ in 0..jokers {
+            // fours into fives
+            if fours == 1 {
+                fours -= 1;
+                fives += 1;
+            // full house into fours
+            } else if threes == 1 && twos == 1 {
+                twos -= 1;
+                threes -= 1;
+
+                fours += 1;
+            // three of a kind into full hose?
+            } else if threes == 1 {
+                threes -= 1;
+                fours += 1;
+            // 2233J
+            // JJ334
+            } else if twos >= 1 {
+                twos -= 1;
+                threes += 1;
+            // J3456
+            } else if ones >= 1 {
+                ones -= 1;
+                twos += 1;
+            }
+        }
+        
         let hand_kind = if fives == 1 {
             HandKind::FiveOfAKind
         } else if fours == 1 {
@@ -91,8 +125,12 @@ impl Hand {
             HandKind::TwoPair
         } else if twos == 1 {
             HandKind::OnePair
-        } else {
+        } else if ones >= 1 {
             HandKind::HighCard
+        } else if jokers == 5 || jokers == 4 {
+            HandKind::FiveOfAKind
+        } else {
+            panic!("WOOT! {:?}", cards);
         };
 
         Hand {
@@ -182,9 +220,9 @@ pub fn part1() {
 
     hands.sort();
 
-    for hand in &hands {
-        println!("{:?} {:?}", hand.hand_kind, hand.cards);
-    }
+    // for hand in &hands {
+    //     println!("{:?} {:?}", hand.hand_kind, hand.cards);
+    // }
     println!("Part1: {}", score(&hands));
 }
 

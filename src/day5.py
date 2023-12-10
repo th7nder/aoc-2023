@@ -15,7 +15,68 @@ class AlmanacMap:
 
         return value
     
+    def range(self, left, right):
+        # print("entries", self.entries)
+        # [79, 92]
+        # [50, 97] => [52, 99]
+        # [98, 100] => [50, 52]
 
+        intervals = []
+        for [destination, source, r] in self.entries:
+            start = source
+            end = source + r
+
+            # print(left, right, start, end)
+
+            # [79, 92]
+            # [50, 97] -> [52, 99]
+            if left >= start and right <= end:
+                new_left = destination + (left - start)
+                new_right = destination + (right - start)
+                intervals.append((new_left, new_right))
+                break
+            # [57, 69] -> [left, right]
+            # [53, 60] -> [49, 56]
+            # [start, end] -> [destination + l_offset, destination + right_offset]
+            elif left >= start and left <= end:
+                # DOESNT SKIP ANYTHING!
+                # [81, 94]
+                # [0, 15]
+                new_left = destination + (left - start)
+                new_right = destination + (end  - 1 - start )
+                # intervals.append((left, end - 1, new_left, new_right))
+                intervals.append((new_left, new_right))
+                # create a new interval
+                left = end
+            # [63, 69] -> [left, right]
+            # [65, 68] -> [87, 90]
+            elif left <= end and right > end:
+                intervals.append((left, start - 1))
+                print("insert: ", left)
+                print("c")
+                new_left = destination + (start - start)
+                new_right = destination + (end - start)
+                # intervals.append((start, end, new_left, new_right))
+                intervals.append((new_left, new_right))
+                print("insert: ", new_left)
+                left = end 
+            # [63, 67] -> [left, right]
+            # [65, 68] -> [87, 90]
+            elif left <= end and right <= end and right >= start:
+                print("d")
+                # [0, 50]
+                # [100, 300] -> [x, x]
+                print("insert: ", left, start, end, left, right )
+                intervals.append((left, start - 1))
+                new_left = destination + (start - start)
+                new_right = destination + (right - start)
+                print("insert: ", new_left)
+                # intervals.append((start, right, new_left, new_right))
+                intervals.append((new_left, new_right))
+                break
+        if len(intervals) == 0:
+            intervals.append((left, right))
+        return intervals
 
 seeds = []
 maps = []
@@ -34,53 +95,42 @@ with open("input/5.txt") as f:
         elif line != "":
             current_entries.append([int(num) for num in line.split(" ")])
 
-# print(am.destination(101))
-# ans = []
-# for seed in seeds:
-#     value = seed
-#     for map in maps:
-#         value = map.destination(value)
-#     ans.append((value, seed))
-
-# ans.sort()
-# print(f"part1: {ans[0][0]}")
-# print(seeds)
-
 def dest(seed):
     value = seed
     for map in maps:
         value = map.destination(value)
     return value
-    
-ans = None
-for i in range(0, len(seeds), 2):
-    start = seeds[i]
-    end = seeds[i] + seeds[i + 1]
 
-    left = start
-    right = end - 1
-    minimum = dest(left)
-    while left < right:
-        mid = left + (right - left) // 2
-        v = dest(mid)
+def part2():
+    ans = []
+    for i in range(0, len(seeds), 2):
+        start = seeds[i]
+        end = seeds[i] + seeds[i + 1]
 
-        minimum = min(v, minimum)
-        print(minimum, left, mid, right)
+        left = start
+        right = end - 1
+        intervals = [(left, right)]
+        for map in maps:
+            new_intervals = []
+            for (left, right) in intervals:
+                a = map.range(left, right)
+                for x in a:
+                    new_intervals.append(x)
+            intervals = new_intervals
+            print(intervals)
 
-        on_the_left = abs(v - dest(right)) / abs(mid - right)
-        on_the_right = abs(v - dest(left)) / abs(mid - left)
-        if on_the_left > on_the_right:
-            right = mid - 1
-        else:
-            left = mid + 1
+        # break
+        for i in intervals:
+            ans.append(i)
 
-    print(f"calc {minimum}")
-    for seed in range(start, end):
-        location = dest(seed)
-        if ans is None:
-            ans = (location, seed)
-        else:
-            ans = min(ans, (location, seed))
-        print(seed, " | ", location)
-    print("NEW PAIR")
-print(ans)
+    print(min(ans))
+
+
+part2()
+# m = AlmanacMap([
+#     [60, 56, 37],
+#     # starts exactly where it should
+#     [56, 93, 4],
+# ])
+
+# print(m.range(46, 56))

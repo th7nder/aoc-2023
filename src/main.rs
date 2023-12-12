@@ -4,8 +4,9 @@ mod day3;
 mod day4;
 mod day7;
 mod day10;
+mod day12;
 mod files;
 
 fn main() {
-    day10::part1();
+    day12::part1();
 }

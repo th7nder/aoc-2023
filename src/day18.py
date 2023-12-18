@@ -139,15 +139,23 @@ def build_coordinates_v2(edges):
 
     return coordinates, border
 
-coords, border = build_coordinates_v2(edges)
+coords, border = build_coordinates(edges)
 
 area = 0
 for i in range(1, len(coords)):
     x1, y1 = coords[i - 1]
     x2, y2 = coords[i]
     area += (y1 + y2) * (x1 - x2)
+area /= 2
 
-print((abs(area) + border + 1) / 2)
+# A -> shoelace formula
+
+# pick's theorem 
+# A = i + b/2 +1
+# i = A - b/2 + 1
+# 
+
+print(abs(area) + (border // 2) + 1)
 
 # print_map(map, min_row, rows, min_col, cols)
 

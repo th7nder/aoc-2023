@@ -152,8 +152,8 @@ area /= 2
 
 # pick's theorem 
 # A = i + b/2 +1
-# i = A - b/2 + 1
-# 
+# i = A - b/2 + 1 // +b 
+# i + b = A + b/2  +1
 
 print(abs(area) + (border // 2) + 1)
 

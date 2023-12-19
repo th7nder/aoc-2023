@@ -37,6 +37,7 @@ impl Workflow {
     }
 }
 
+#[derive(Debug, Clone)]
 struct Rule {
     kind: RuleKind,
     segment: Segment,
@@ -45,6 +46,27 @@ struct Rule {
 }
 
 impl Rule {
+    fn invert(&self) -> Rule {
+        let (kind, value) = match self.kind {
+            RuleKind::Empty => (self.kind.clone(), self.value),
+            // > 2007
+            // <= 2007
+            // < 2008
+            RuleKind::Greater => (RuleKind::Lesser, self.value + 1),
+            // < 1999
+            // >= 1999
+            // > 1998
+            RuleKind::Lesser => (RuleKind::Greater, self.value - 1),
+        };
+
+        Rule {
+            kind,
+            value,
+            segment: self.segment,
+            target: self.target.clone()
+        }
+    }
+
     fn parse(s: &str) -> Rule {
         if !s.contains(":") {
             return Rule {
@@ -99,14 +121,14 @@ impl Rule {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 enum RuleKind {
     Empty,
     Greater,
     Lesser,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 
 enum Segment {
     X,
@@ -218,33 +240,157 @@ pub fn part1() {
     println!("Part1: {ans}");
 }
 
-pub fn part2() {
-    let (workflows, _) = parse("input/19_small.txt");
+fn determine_ranges(constraints: &Vec<Rule>) -> i64 {
+    let mut s_lower: i64 = 0;
+    let mut s_upper: i64 = 4001;
+    let mut x_lower: i64 = 0;
+    let mut x_upper: i64 = 4001;
+    let mut m_lower: i64 = 0;
+    let mut m_upper: i64 = 4001;
+    let mut a_lower: i64 = 0;
+    let mut a_upper: i64 = 4001;
 
-    let mut ans: i64 = 0;
-    for x in 1..=4000 {
-        println!("X: {x}");
-        for m in 1..=4000 {
-            println!("M: {m}");
-            for a in 1..=4000 {
-                println!("A: {a}");
-                for s in 1..=4000 {
-                    let mut p = Part {
-                        x,
-                        m,
-                        a,
-                        s,
-                        target: "in".into()
-                    };
-
-                    if process_part(&mut p, &workflows) {
-                        ans += 1;
+    for constraint in constraints {
+        match constraint.segment {
+            Segment::X => {
+                match constraint.kind {
+                    RuleKind::Empty => {
+                        // do nothing, its not constrained
                     }
-                    process_part(&mut p, &workflows);
+                    RuleKind::Greater => {
+                        if constraint.value as i64 > x_lower {
+                            x_lower = constraint.value as i64;
+                        } 
+                    },
+                    RuleKind::Lesser => {
+                        if (constraint.value as i64) < x_upper {
+                            x_upper = constraint.value as i64;
+                        }
+                    }
+                }
+            },
+            Segment::M => {
+                match constraint.kind {
+                    RuleKind::Empty => {
+                        // do nothing, its not constrained
+                    }
+                    RuleKind::Greater => {
+                        if (constraint.value as i64) > m_lower {
+                            m_lower = constraint.value as i64;
+                        } 
+                    },
+                    RuleKind::Lesser => {
+                        if (constraint.value as i64) < m_upper {
+                            m_upper = constraint.value as i64;
+                        }
+                    }
+                }
+            }
+            Segment::A => {
+                match constraint.kind {
+                    RuleKind::Empty => {
+                        // do nothing, its not constrained
+                    }
+                    RuleKind::Greater => {
+                        if (constraint.value as i64) > a_lower {
+                            a_lower = constraint.value as i64;
+                        } 
+                    },
+                    RuleKind::Lesser => {
+                        if (constraint.value as i64) < a_upper {
+                            a_upper = constraint.value as i64;
+                        }
+                    }
+                }
+            }
+            Segment::S => {
+                match constraint.kind {
+                    RuleKind::Empty => {
+                        // do nothing, its not constrained
+                    },
+                    RuleKind::Greater => {
+                        if (constraint.value as i64) > s_lower {
+                            s_lower = constraint.value as i64;
+                        } 
+                    },
+                    RuleKind::Lesser => {
+                        if (constraint.value as i64) < s_upper {
+                            s_upper = constraint.value as i64;
+                        }
+                    }
                 }
             }
         }
     }
+
+    // println!("X: ({x_lower} {x_upper})");
+    // println!("M: ({m_lower} {m_upper})");
+    // println!("A: ({a_lower} {a_upper})");
+    // println!("S: ({s_lower} {s_upper})");
+    // 10 2
+    // 3 4 5 6 7 8 9
+    
+    let x = (x_upper - x_lower) - 1;
+    let m = (m_upper - m_lower) - 1;
+    let a = (a_upper - a_lower) - 1;
+    let s = (s_upper - s_lower) - 1;
+
+    return x * m * a * s;
+    // println!("{ans}");
+}
+
+
+fn traverse(current_workflow: &str, workflows: &HashMap<String, Workflow>, constraints: &mut Vec<Rule>, path: &mut Vec<String>) -> i64 {
+    path.push(current_workflow.into());
+
+    if current_workflow == "A" {
+        for (idx, a) in path.iter().enumerate() {
+            if idx != path.len() - 1 {
+                print!("{} -> ", a);
+            } else {
+                print!("{a}");
+            }
+        }
+        println!();
+        // println!("{:?}",  constraints);
+        path.pop();
+        return determine_ranges(constraints);
+    } else if current_workflow == "R" {
+        path.pop();
+        return 0;
+    }
+
+
+    let mut ans = 0;
+    let workflow = workflows.get(current_workflow).expect("workflow should exist");
+    for rule in &workflow.rules {
+        constraints.push(rule.clone());
+        ans += traverse(&rule.target, workflows, constraints, path);
+        constraints.pop();
+        constraints.push(rule.invert());
+    }
+
+    for _ in 0..workflow.rules.len() {
+        constraints.pop();
+    }
+
+    path.pop();
+
+    return ans;
+}
+
+
+pub fn part2() {
+    let (workflows, _) = parse("input/19.txt");
+
+
+    let mut constraints = Vec::new();
+    let mut path = Vec::new();
+    let ans = traverse("in", &workflows, &mut constraints, &mut path);
+
+    // start from in, dfs into each rule, invert if necessary
+    // if reached, then display, we'll be gooood
+    // upper_bound - lower_bound - 1 (num of values)
 
     println!("Part 2: {ans}");
 }

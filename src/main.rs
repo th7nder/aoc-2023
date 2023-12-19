@@ -9,5 +9,5 @@ mod files;
 mod day19;
 
 fn main() {
-    day19::part1();
+    day19::part2();
 }

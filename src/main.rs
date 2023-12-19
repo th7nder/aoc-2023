@@ -6,7 +6,8 @@ mod day7;
 mod day10;
 mod day12;
 mod files;
+mod day19;
 
 fn main() {
-    day12::part1();
+    day19::part1();
 }

@@ -150,28 +150,32 @@ impl Part {
     }
 }
 
-fn process_parts(parts: &mut Vec<Part>, workflows: &HashMap<String, Workflow>) -> i32 {
-    for part in parts.iter_mut() {
-        loop {
-            match part.target.as_str() {
-                "A" => {
-                    break;
-                }
-                "R" => {
-                    break;
-                }
-                target => {
-                    let workflow = workflows.get(target).expect(
-                        format!(
-                            "Workflow of given name was not found in workflows: {}",
-                            target
-                        )
-                        .as_str(),
-                    );
-                    part.target = workflow.process(part);
-                }
+fn process_part(part: &mut Part, workflows: &HashMap<String, Workflow>) -> bool {
+    loop {
+        match part.target.as_str() {
+            "A" => {
+                return true;
+            }
+            "R" => {
+                return false;
+            }
+            target => {
+                let workflow = workflows.get(target).expect(
+                    format!(
+                        "Workflow of given name was not found in workflows: {}",
+                        target
+                    )
+                    .as_str(),
+                );
+                part.target = workflow.process(part);
             }
         }
+    }
+}
+
+fn process_parts(parts: &mut Vec<Part>, workflows: &HashMap<String, Workflow>) -> i32 {
+    for part in parts.iter_mut() {
+        process_part(part, workflows);
     }
 
     parts.iter()
@@ -212,6 +216,37 @@ pub fn part1() {
     let ans: i32 = process_parts(&mut parts, &workflow);
 
     println!("Part1: {ans}");
+}
+
+pub fn part2() {
+    let (workflows, _) = parse("input/19_small.txt");
+
+    let mut ans: i64 = 0;
+    for x in 1..=4000 {
+        println!("X: {x}");
+        for m in 1..=4000 {
+            println!("M: {m}");
+            for a in 1..=4000 {
+                println!("A: {a}");
+                for s in 1..=4000 {
+                    let mut p = Part {
+                        x,
+                        m,
+                        a,
+                        s,
+                        target: "in".into()
+                    };
+
+                    if process_part(&mut p, &workflows) {
+                        ans += 1;
+                    }
+                    process_part(&mut p, &workflows);
+                }
+            }
+        }
+    }
+
+    println!("Part 2: {ans}");
 }
 
 #[cfg(test)]

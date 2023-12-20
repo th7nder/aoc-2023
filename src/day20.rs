@@ -21,7 +21,7 @@ enum ModuleKind {
     Empty
 }
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq)]
 enum Signal {
     LOW,
     HIGH
@@ -72,7 +72,11 @@ impl Module {
                     }
                 }
 
+                // 4001, 3877, 3823, 3847
                 let response = if all_high {
+                    if self.name == "ps" {
+                        panic!("{} -> xddd, {:?}", self.name, self.saved);
+                    }
                     Signal::LOW 
                 } else {
                     Signal::HIGH
@@ -154,10 +158,11 @@ fn preprocess(modules: Vec<Module>) -> HashMap<String, Module> {
     // fix converters
     let keys: Vec<String> = module_map.keys().map(|k| k.into()).collect();
     for key in keys {
-        let targets = module_map.get(key.as_str()).unwrap().targets.clone();
+        let module = module_map.get(key.as_str()).unwrap();
+        let targets = module.targets.clone();
 
         for target in targets {
-            println!("Getting {}", target);
+            // println!("Getting {}", target);
             if !module_map.contains_key(&target) {
                 module_map.insert(target.clone(), Module::empty(&target));
             }
@@ -234,12 +239,62 @@ pub fn part1() {
 pub fn part2() {
     let mut modules = parse("input/20.txt");
 
-    let mut button_pushes = 0;
-    loop {
-        button_pushes += 1;
-        push_button(&mut modules);
+    let mut to_detect = Vec::new();
+
+    for module in modules.values() {
+        match module.kind {
+            ModuleKind::Conjuction => {
+                println!("Module parents {}: {}", module.name, module.saved.len());
+                if module.saved.len() >= 4 {
+                    to_detect.push(module.name.clone());
+                }
+            },
+            _ => {},
+        }
     }
 
+    println!("To detect: {:?}", to_detect);
+
+    for detect in vec![String::from("ml")] {
+        println!("Detecting: {}", detect);
+        modules = parse("input/20.txt");
+        let mut button_pushes = 0;
+        let m = modules.get(&detect).unwrap();
+        println!("{:?}", m.saved);
+
+        loop {
+            button_pushes += 1;
+            println!("PUSH! {button_pushes}");
+            push_button(&mut modules);
+            let module = modules.get(&detect).unwrap();
+            // println!("{:?}", module.saved);
+
+            let on = module.saved.iter()
+                .map(|(_, signal)| signal)
+                .filter(|s| **s == Signal::HIGH)
+                .count();
+
+            // break
+
+
+            // if on == module.saved.len() - 1 {
+                // println!("{:?}", module.saved);
+            // }
+            if on == module.saved.len() {
+                println!("{:?}", module.saved);
+                println!("Detected for: {}, {}", detect, button_pushes);
+                    break
+            }
+        }
+
+        break
+    }
+
+    // let mut button_pushes = 0;
+    // loop {
+    //     button_pushes += 1;
+    //     push_button(&mut modules);
+    // }
 }
 
 

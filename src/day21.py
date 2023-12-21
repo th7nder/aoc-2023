@@ -1,7 +1,7 @@
 
 garden = []
 
-with open("input/21_small.txt") as f:
+with open("input/21.txt") as f:
     for line in f:
         line = line.strip()
         if line:
@@ -49,41 +49,36 @@ def part1(garden, max_steps=6):
      return new_pos[0] >= 0 and new_pos[0] < rows and new_pos[1] >= 0 and new_pos[1] < cols
 
 
-    visited = {
-        start: 0
-    }
-    queue = deque([start])
+    visited = set(start)
+    queue = deque([(start, max_steps)])
+    haha = set()
 
-    level = 0
-    while queue and level < max_steps:
-        nodes = len(queue)
-        print(nodes, level)
-        for _ in range(nodes):
-            curr = queue.popleft()
+    while queue:
+        curr, s = queue.popleft()
 
-            for dir in [TOP, DOWN, RIGHT, LEFT]:
-                new_pos = add(curr, dir)
-                (new_r, new_c) = new_pos
+        if s % 2 == 0:
+            haha.add(curr)
+        if s == 0:
+            continue
+        for dir in [TOP, DOWN, RIGHT, LEFT]:
+            new_pos = add(curr, dir)
+            (new_r, new_c) = new_pos
 
-                if not is_valid(new_pos):
-                    continue
-                if garden[new_r][new_c] == '#':
-                    continue
-                
-                if level not in visited:
-                    visited[level] = set() 
-                visited[level].add(new_pos)
-                queue.append((new_pos))
-        level += 1
-
-    # for l in range(level):
-    #     print("Plots at level: ", l, " = ", len(visited[l]))
-    #     print_garden(garden, visited[l])
+            if not is_valid(new_pos):
+                continue
+            if garden[new_r][new_c] == '#':
+                continue
+            
+            if new_pos in visited:
+                continue
 
 
-    return len(visited[level - 1])
+            visited.add(new_pos)
+            queue.append((new_pos, s - 1))
 
-visited = part1(garden, 6)
-print("Part 1: ", visited)
+    return haha
 
+visited = part1(garden, 64)
+print_garden(garden, visited)
+print(len(visited))
 

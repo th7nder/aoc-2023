@@ -41,10 +41,11 @@ def preprocess(garden):
 from collections import deque
 
 
-print_garden(garden, visited=set())
+# print_garden(garden, visited=set())
 
-def fill(garden, max_steps=6):
-    rows, cols, start = preprocess(garden)
+def fill(start, max_steps=6):
+    rows = len(garden)
+    cols = len(garden[0])
     def is_valid(new_pos):
      return new_pos[0] >= 0 and new_pos[0] < rows and new_pos[1] >= 0 and new_pos[1] < cols
 
@@ -78,7 +79,54 @@ def fill(garden, max_steps=6):
             visited.add((new_pos))
             queue.append((new_pos, s - 1))
 
-    return ans
+    return len(ans)
 
-print("Part 1: ", len(fill(garden, 64)))
+# print("Part 1: ", len(fill(garden, 64)))
+
+steps = 26501365
+
+rows, cols, (sr, sc) = preprocess(garden)
+assert rows == cols
+assert sr == rows // 2
+assert sc == cols // 2
+
+size = rows
+
+grid_width = (steps - sr) // size - 1
+
+
+odd = (grid_width // 2 * 2 + 1) ** 2
+even = ((grid_width + 1) // 2 * 2) ** 2
+
+odd_points = fill((sr, sc), size * 2 + 1)
+even_points = fill((sr, sc), size * 2)
+
+top = fill((size - 1, sc), size - 1)
+right = fill((sr, 0), size - 1)
+bottom = fill((0, sc), size - 1)
+left = fill((sr, size - 1), size - 1)
+
+small_tr = fill((size - 1, 0), size // 2 - 1)
+small_tl = fill((size - 1, size - 1), size // 2 - 1)
+
+small_br = fill((0, 0), size // 2 - 1)
+small_bl = fill((0, size - 1), size // 2 - 1 )
+
+
+big_tr = fill((size - 1, 0), size // 2 - 1 + size)
+big_tl = fill((size - 1, size - 1), size // 2 - 1 + size)
+big_br = fill((0, 0), size // 2 - 1 + size)
+big_bl = fill((0, size - 1), size // 2 - 1 + size)
+
+# 2 // 2 * 2 + 1 ** 2
+
+ans = (
+    odd * odd_points 
+    + even * even_points
+    + right + left + bottom + top
+    + (grid_width + 1) * (small_tl + small_tr + small_bl + small_br)
+    + (grid_width) * (big_tl + big_tr + big_bl + big_br)
+)
+
+print(ans)
 

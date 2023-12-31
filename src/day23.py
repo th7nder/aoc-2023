@@ -45,14 +45,6 @@ def dfs(sr, sc, r, c, grid, graph, visited, path):
 
 
 
-dirs = {
-    '>': [(0, 1)],
-    '<': [(0, -1)],
-    '^': [(-1, 0)],
-    'v': [(1, 0)],
-    '.': [(1, 0), (-1, 0), (0, 1), (0, -1)]
-}
-
 
 for sr, sc in points:
     stack = [(0, sr, sc)]
